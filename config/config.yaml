@@ -1,0 +1,297 @@
+subinfo_fields:
+  - name: subject_id
+    type: int
+    constraints:
+      min: 101
+      max: 999
+      digits: 3
+
+subinfo_mapping:
+  subject_id: Subject ID (3 digits)
+  Participant Information: Participant Information
+  registration_failed: Registration failed
+  registration_successful: Registration successful
+  invalid_input: "{field} is invalid"
+
+window:
+  size: [1280, 720]
+  units: pix
+  screen: 0
+  bg_color: black
+  fullscreen: true
+  fullscreen_lock_escape: true
+  monitor_width_cm: 35.5
+  monitor_distance_cm: 60
+
+task:
+  task_name: mcgurk_preview
+  save_path: ./outputs/human
+  total_blocks: 2
+  total_trials: 60
+  trial_per_block: 30
+  conditions: [congruent, incongruent, audio_only]
+  key_list: ["f", "j", "k", "space"]
+  ba_key: f
+  da_key: j
+  ga_key: k
+  seed_mode: same_across_sub
+  overall_seed: 2025
+  delta: 1
+  language: Chinese
+  voice_name: zh-CN-YunyangNeural
+  voice_enabled: false
+  input_mode: keyboard
+  hide_cursor: true
+  force_quit_enabled: true
+  force_quit_shortcut: ctrl+q
+
+timing:
+  fixation_duration: [0.5, 0.8]
+  av_duration: 1.1
+  decision_deadline: 1.8
+  feedback_duration: 0.7
+  iti_duration: [0.5, 0.9]
+
+stimuli:
+  instruction_text:
+    type: text
+    text: |
+      McGurk Effect Task
+
+      In each trial, you will hear speech and observe a mouth movement.
+      Report what syllable you subjectively heard.
+
+      Key mapping:
+      F = /ba/
+      J = /da/
+      K = /ga/
+
+      Please respond quickly and accurately.
+      Press Space to begin.
+    color: white
+    height: 30
+    wrapWidth: 1020
+    pos: [0, 70]
+    font: SimHei
+
+  fixation:
+    type: text
+    text: "+"
+    color: white
+    height: 52
+    pos: [0, 0]
+    font: SimHei
+
+  avatar_face:
+    type: circle
+    radius: 160
+    pos: [0, 40]
+    fillColor: "#f5dbb8"
+    lineColor: "#d9bd99"
+    lineWidth: 3
+
+  eye_left:
+    type: circle
+    radius: 14
+    pos: [-58, 95]
+    fillColor: "#1a1a1a"
+    lineColor: "#1a1a1a"
+    lineWidth: 1
+
+  eye_right:
+    type: circle
+    radius: 14
+    pos: [58, 95]
+    fillColor: "#1a1a1a"
+    lineColor: "#1a1a1a"
+    lineWidth: 1
+
+  nose:
+    type: shape
+    size: 44
+    pos: [0, 52]
+    vertices:
+      - [0, 16]
+      - [-12, -10]
+      - [12, -10]
+    fillColor: "#caa484"
+    lineColor: "#caa484"
+    lineWidth: 1
+
+  mouth_ba:
+    type: rect
+    width: 175
+    height: 18
+    pos: [0, -8]
+    fillColor: "#941f1f"
+    lineColor: "#731616"
+    lineWidth: 2
+
+  mouth_da:
+    type: rect
+    width: 120
+    height: 48
+    pos: [0, -8]
+    fillColor: "#941f1f"
+    lineColor: "#731616"
+    lineWidth: 2
+
+  mouth_ga:
+    type: circle
+    radius: 34
+    pos: [0, -8]
+    fillColor: "#941f1f"
+    lineColor: "#731616"
+    lineWidth: 2
+
+  mouth_none:
+    type: rect
+    width: 150
+    height: 6
+    pos: [0, -8]
+    fillColor: "#855c47"
+    lineColor: "#855c47"
+    lineWidth: 1
+
+  speech_prompt:
+    type: text
+    text: "Listen and observe the mouth movement"
+    color: "#f2f2f2"
+    height: 28
+    wrapWidth: 900
+    pos: [0, -220]
+    font: SimHei
+
+  decision_prompt:
+    type: text
+    text: "Which syllable did you hear?"
+    color: "#f7edab"
+    height: 40
+    pos: [0, 120]
+    font: SimHei
+
+  key_hint:
+    type: text
+    text: "Keys: {ba_key}=/ba/, {da_key}=/da/, {ga_key}=/ga/"
+    color: "#e5e5e5"
+    height: 30
+    wrapWidth: 980
+    pos: [0, 40]
+    font: SimHei
+
+  feedback_recorded:
+    type: text
+    text: |
+      Response recorded
+      You reported: /{reported_syllable}/
+      Key: {response_key}
+    color: "#b8f5b8"
+    height: 32
+    wrapWidth: 980
+    pos: [0, 20]
+    font: SimHei
+
+  feedback_timeout:
+    type: text
+    text: |
+      Timeout: no key response was captured.
+      Please respond faster on the next trial.
+    color: "#ffb3b3"
+    height: 30
+    wrapWidth: 980
+    pos: [0, 20]
+    font: SimHei
+
+  block_break:
+    type: text
+    text: |
+      Block {block_num}/{total_blocks} complete
+
+      Trials: {total_trials}
+      Valid responses: {responded_trials}
+      Response rate: {response_rate}
+      Mean RT: {mean_rt_ms:.0f} ms
+
+      Reports: /ba/={ba_rate}, /da/={da_rate}, /ga/={ga_rate}
+      Incongruent fusion rate (/da/): {fusion_rate} (n={incongruent_responded})
+
+      Press Space to continue.
+    color: white
+    height: 25
+    wrapWidth: 1100
+    pos: [0, 0]
+    font: SimHei
+
+  good_bye:
+    type: text
+    text: |
+      Task complete
+
+      Total trials: {total_trials}
+      Valid responses: {responded_trials}
+      Response rate: {response_rate}
+      Mean RT: {mean_rt_ms:.0f} ms
+
+      Reports: /ba/={ba_rate}, /da/={da_rate}, /ga/={ga_rate}
+      Incongruent fusion rate (/da/): {fusion_rate} (n={incongruent_responded})
+
+      Press Space to exit.
+    color: white
+    height: 25
+    wrapWidth: 1100
+    pos: [0, 0]
+    font: SimHei
+
+  audio_ba:
+    type: sound
+    file: ./assets/audio/ba.wav
+
+  audio_da:
+    type: sound
+    file: ./assets/audio/da.wav
+
+  audio_ga:
+    type: sound
+    file: ./assets/audio/ga.wav
+
+triggers:
+  map:
+    exp_onset: 1
+    exp_end: 2
+    block_onset: 10
+    block_end: 11
+    fixation_onset: 20
+    congruent_av_onset: 30
+    incongruent_av_onset: 31
+    audio_only_av_onset: 32
+    congruent_decision_onset: 40
+    incongruent_decision_onset: 41
+    audio_only_decision_onset: 42
+    response_ba: 50
+    response_da: 51
+    response_ga: 52
+    congruent_no_response: 60
+    incongruent_no_response: 61
+    audio_only_no_response: 62
+    response_recorded_fb_onset: 70
+    timeout_fb_onset: 71
+    iti_onset: 80
+
+  driver:
+    type: serial_url
+    url: loop://
+    baudrate: 115200
+
+  timing:
+    post_delay_ms: 1
+
+  policy:
+    strict: false
+
+controller:
+  syllables: [ba, da, ga]
+  incongruent_pairs:
+    - [ba, ga]
+    - [ga, ba]
+  random_seed: null
+  enable_logging: true
