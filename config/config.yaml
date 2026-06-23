@@ -7,11 +7,11 @@ subinfo_fields:
       digits: 3
 
 subinfo_mapping:
-  subject_id: Subject ID (3 digits)
-  Participant Information: Participant Information
-  registration_failed: Registration failed
-  registration_successful: Registration successful
-  invalid_input: "{field} is invalid"
+  subject_id: 受试者编号（3位）
+  Participant Information: 被试信息
+  registration_failed: 注册失败
+  registration_successful: 注册成功
+  invalid_input: "{field} 输入无效"
 
 window:
   size: [1280, 720]
@@ -24,7 +24,7 @@ window:
   monitor_distance_cm: 60
 
 task:
-  task_name: mcgurk_preview
+  task_name: mcgurk
   save_path: ./outputs/human
   total_blocks: 3
   total_trials: 90
@@ -56,18 +56,18 @@ stimuli:
   instruction_text:
     type: text
     text: |
-      McGurk Effect Task
+      麦格克效应任务
 
-      In each trial, you will hear speech and observe a mouth movement.
-      Report what syllable you subjectively heard.
+      每轮会同时呈现语音和口型（或仅语音）。
+      请报告你主观“听到”的音节。
 
-      Key mapping:
+      按键映射：
       F = /ba/
       J = /da/
       K = /ga/
 
-      Please respond quickly and accurately.
-      Press Space to begin.
+      请尽量快速且准确地作答。
+      按空格键开始。
     color: white
     height: 30
     wrapWidth: 1020
@@ -155,7 +155,7 @@ stimuli:
 
   speech_prompt:
     type: text
-    text: "Listen and observe the mouth movement"
+    text: "请听声音并观察口型"
     color: "#f2f2f2"
     height: 28
     wrapWidth: 900
@@ -164,7 +164,7 @@ stimuli:
 
   decision_prompt:
     type: text
-    text: "Which syllable did you hear?"
+    text: "你听到的音节是？"
     color: "#f7edab"
     height: 40
     pos: [0, 120]
@@ -172,7 +172,7 @@ stimuli:
 
   key_hint:
     type: text
-    text: "Keys: {ba_key}=/ba/, {da_key}=/da/, {ga_key}=/ga/"
+    text: "按键：{ba_key}=/ba/，{da_key}=/da/，{ga_key}=/ga/"
     color: "#e5e5e5"
     height: 30
     wrapWidth: 980
@@ -182,9 +182,9 @@ stimuli:
   feedback_recorded:
     type: text
     text: |
-      Response recorded
-      You reported: /{reported_syllable}/
-      Key: {response_key}
+      已记录
+      你的报告：/{reported_syllable}/
+      按键：{response_key}
     color: "#b8f5b8"
     height: 32
     wrapWidth: 980
@@ -194,8 +194,8 @@ stimuli:
   feedback_timeout:
     type: text
     text: |
-      Timeout: no key response was captured.
-      Please respond faster on the next trial.
+      本轮超时，未记录到按键
+      请在下一轮尽快作答
     color: "#ffb3b3"
     height: 30
     wrapWidth: 980
@@ -205,17 +205,17 @@ stimuli:
   block_break:
     type: text
     text: |
-      Block {block_num}/{total_blocks} complete
+      第 {block_num}/{total_blocks} 组完成
 
-      Trials: {total_trials}
-      Valid responses: {responded_trials}
-      Response rate: {response_rate}
-      Mean RT: {mean_rt_ms:.0f} ms
+      本组试次数：{total_trials}
+      有效作答数：{responded_trials}
+      作答率：{response_rate:.1%}
+      平均反应时：{mean_rt_ms:.0f} ms
 
-      Reports: /ba/={ba_rate}, /da/={da_rate}, /ga/={ga_rate}
-      Incongruent fusion rate (/da/): {fusion_rate} (n={incongruent_responded})
+      报告分布：/ba/={ba_rate:.1%}，/da/={da_rate:.1%}，/ga/={ga_rate:.1%}
+      不一致条件融合率（/da/）：{fusion_rate:.1%}（n={incongruent_responded}）
 
-      Press Space to continue.
+      按空格键继续。
     color: white
     height: 25
     wrapWidth: 1100
@@ -225,17 +225,17 @@ stimuli:
   good_bye:
     type: text
     text: |
-      Task complete
+      任务结束
 
-      Total trials: {total_trials}
-      Valid responses: {responded_trials}
-      Response rate: {response_rate}
-      Mean RT: {mean_rt_ms:.0f} ms
+      总试次数：{total_trials}
+      有效作答数：{responded_trials}
+      作答率：{response_rate:.1%}
+      平均反应时：{mean_rt_ms:.0f} ms
 
-      Reports: /ba/={ba_rate}, /da/={da_rate}, /ga/={ga_rate}
-      Incongruent fusion rate (/da/): {fusion_rate} (n={incongruent_responded})
+      报告分布：/ba/={ba_rate:.1%}，/da/={da_rate:.1%}，/ga/={ga_rate:.1%}
+      不一致条件融合率（/da/）：{fusion_rate:.1%}（n={incongruent_responded}）
 
-      Press Space to exit.
+      按空格键退出。
     color: white
     height: 25
     wrapWidth: 1100

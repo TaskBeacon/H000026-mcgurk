@@ -20,7 +20,7 @@ import {
 import configText from "./config/config.yaml?raw";
 import { Controller } from "./src/controller";
 import { run_trial } from "./src/run_trial";
-import { summarizeBlock, summarizeOverall } from "./src/utils";
+import { generate_mcgurk_conditions, summarizeBlock, summarizeOverall } from "./src/utils";
 
 const audioBaAsset = new URL("./assets/audio/ba.wav", import.meta.url).href;
 const audioDaAsset = new URL("./assets/audio/da.wav", import.meta.url).href;
@@ -121,7 +121,13 @@ export async function run(root: HTMLElement): Promise<void> {
           block_idx: blockIndex,
           settings,
           n_trials: trialPerBlock
-        }).generate_conditions();
+        }).generate_conditions({
+          func: generate_mcgurk_conditions,
+          args: [
+            controller.syllables,
+            controller.incongruent_pairs.map((pair) => [...pair])
+          ]
+        });
 
         block.conditions.forEach((condition, trialIndex) => {
           const trial = new TrialBuilder({

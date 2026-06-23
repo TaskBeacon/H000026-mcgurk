@@ -1,8 +1,114 @@
 import type { ReducedTrialRow } from "psyflow-web";
+import { PythonRandom } from "psyflow-web";
 
-export function parse_mcgurk_condition(condition: string): string {
-  const normalized = String(condition).trim().toLowerCase();
-  return normalized.length > 0 ? normalized : "unknown";
+import type { TrialSpec } from "./controller";
+
+function normalizeSyllables(syllables: string[] | null | undefined): string[] {
+  const normalized = (Array.isArray(syllables) ? syllables : ["ba", "da", "ga"])
+    .map((value) => String(value).trim().toLowerCase())
+    .filter(Boolean);
+  return normalized.length > 0 ? normalized : ["ba", "da", "ga"];
+}
+
+function normalizePairs(pairs: Array<[string, string] | string[]> | null | undefined): Array<[string, string]> {
+  const normalized: Array<[string, string]> = [];
+  (Array.isArray(pairs) ? pairs : [["ba", "ga"], ["ga", "ba"]]).forEach((pair) => {
+    if (!Array.isArray(pair) || pair.length !== 2) {
+      return;
+    }
+    const audio = String(pair[0]).trim().toLowerCase();
+    const visual = String(pair[1]).trim().toLowerCase();
+    if (audio && visual) {
+      normalized.push([audio, visual]);
+    }
+  });
+  return normalized.length > 0 ? normalized : [["ba", "ga"], ["ga", "ba"]];
+}
+
+function choice<T>(rng: PythonRandom, values: T[]): T {
+  if (values.length === 0) {
+    throw new Error("Cannot sample from an empty list.");
+  }
+  return values[rng.randBelow(values.length)];
+}
+
+function buildTrialSpec(
+  condition: string,
+  rng: PythonRandom,
+  syllables: string[],
+  incongruentPairs: Array<[string, string]>
+): TrialSpec {
+  const conditionId = String(condition).trim().toLowerCase();
+  if (conditionId === "congruent") {
+    const syllable = choice(rng, syllables);
+    return {
+      condition: "congruent",
+      audio_syllable: syllable,
+      visual_syllable: syllable,
+      expected_percept: syllable
+    };
+  }
+  if (conditionId === "incongruent") {
+    const pair = choice(rng, incongruentPairs);
+    return {
+      condition: "incongruent",
+      audio_syllable: pair[0],
+      visual_syllable: pair[1],
+      expected_percept: "da"
+    };
+  }
+  if (conditionId === "audio_only") {
+    const syllable = choice(rng, syllables);
+    return {
+      condition: "audio_only",
+      audio_syllable: syllable,
+      visual_syllable: "none",
+      expected_percept: syllable
+    };
+  }
+  const syllable = choice(rng, syllables);
+  return {
+    condition: conditionId || "unknown",
+    audio_syllable: syllable,
+    visual_syllable: "none",
+    expected_percept: syllable
+  };
+}
+
+export function generate_mcgurk_conditions(
+  n_trials: number,
+  condition_labels: string[] | null | undefined,
+  syllables: string[] | null | undefined,
+  incongruent_pairs: Array<[string, string] | string[]> | null | undefined,
+  seed: number
+): string[] {
+  const labels = (Array.isArray(condition_labels) ? condition_labels : ["congruent", "incongruent", "audio_only"])
+    .map((label) => String(label).trim().toLowerCase())
+    .filter(Boolean);
+  const conditionLabels = labels.length > 0 ? labels : ["congruent", "incongruent", "audio_only"];
+  const rng = new PythonRandom(Number(seed ?? 0));
+  const normalizedSyllables = normalizeSyllables(syllables);
+  const normalizedPairs = normalizePairs(incongruent_pairs);
+
+  const schedule: string[] = [];
+  while (schedule.length < Math.trunc(n_trials)) {
+    schedule.push(...conditionLabels);
+  }
+  rng.shuffle(schedule);
+
+  return schedule.slice(0, Math.trunc(n_trials)).map((condition) =>
+    JSON.stringify(buildTrialSpec(condition, rng, normalizedSyllables, normalizedPairs))
+  );
+}
+
+export function parse_mcgurk_condition(condition: string): TrialSpec {
+  const parsed = JSON.parse(String(condition)) as Partial<TrialSpec>;
+  return {
+    condition: String(parsed.condition ?? "unknown").trim().toLowerCase(),
+    audio_syllable: String(parsed.audio_syllable ?? "ba").trim().toLowerCase(),
+    visual_syllable: String(parsed.visual_syllable ?? "none").trim().toLowerCase(),
+    expected_percept: String(parsed.expected_percept ?? parsed.audio_syllable ?? "ba").trim().toLowerCase()
+  };
 }
 
 function asBool(value: unknown): boolean {
@@ -43,11 +149,11 @@ export interface McGurkSummary {
   total_trials: number;
   responded_trials: number;
   incongruent_responded: number;
-  response_rate: string;
-  fusion_rate: string;
-  ba_rate: string;
-  da_rate: string;
-  ga_rate: string;
+  response_rate: number;
+  fusion_rate: number;
+  ba_rate: number;
+  da_rate: number;
+  ga_rate: number;
   mean_rt_ms: number;
 }
 
@@ -58,11 +164,11 @@ function summarizeRows(rows: ReducedTrialRow[]): McGurkSummary {
       total_trials: 0,
       responded_trials: 0,
       incongruent_responded: 0,
-      response_rate: "0.0%",
-      fusion_rate: "0.0%",
-      ba_rate: "0.0%",
-      da_rate: "0.0%",
-      ga_rate: "0.0%",
+      response_rate: 0,
+      fusion_rate: 0,
+      ba_rate: 0,
+      da_rate: 0,
+      ga_rate: 0,
       mean_rt_ms: 0
     };
   }
@@ -80,11 +186,11 @@ function summarizeRows(rows: ReducedTrialRow[]): McGurkSummary {
     total_trials: totalTrials,
     responded_trials: responded.length,
     incongruent_responded: incongruentResponded.length,
-    response_rate: `${((responded.length / totalTrials) * 100).toFixed(1)}%`,
-    fusion_rate: `${(rate(incongruentResponded, "reported_syllable", "da") * 100).toFixed(1)}%`,
-    ba_rate: `${(rate(responded, "reported_syllable", "ba") * 100).toFixed(1)}%`,
-    da_rate: `${(rate(responded, "reported_syllable", "da") * 100).toFixed(1)}%`,
-    ga_rate: `${(rate(responded, "reported_syllable", "ga") * 100).toFixed(1)}%`,
+    response_rate: responded.length / totalTrials,
+    fusion_rate: rate(incongruentResponded, "reported_syllable", "da"),
+    ba_rate: rate(responded, "reported_syllable", "ba"),
+    da_rate: rate(responded, "reported_syllable", "da"),
+    ga_rate: rate(responded, "reported_syllable", "ga"),
     mean_rt_ms: Number(meanRtMs.toFixed(1))
   };
 }

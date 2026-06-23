@@ -1,4 +1,5 @@
 import {
+  resolve_deadline,
   set_trial_context,
   type StimBank,
   type TaskSettings,
@@ -8,10 +9,6 @@ import {
 
 import type { Controller, TrialSpec } from "./controller";
 import { parse_mcgurk_condition } from "./utils";
-
-function asDuration(controller: Controller, value: unknown, defaultValue: number): number {
-  return controller.sample_duration(value, defaultValue);
-}
 
 function response_to_syllable(
   responseKey: unknown,
@@ -35,7 +32,8 @@ function response_to_syllable(
 }
 
 function resolve_trial_spec(controller: Controller, condition: string): TrialSpec {
-  return controller.build_trial(condition);
+  void controller;
+  return parse_mcgurk_condition(condition);
 }
 
 export function run_trial(
@@ -50,20 +48,24 @@ export function run_trial(
   }
 ): TrialBuilder {
   const { settings, stimBank, controller, block_id, block_idx } = context;
-  const conditionName = parse_mcgurk_condition(condition);
-  const trialId = controller.next_trial_id();
-  const trialSpec = resolve_trial_spec(controller, conditionName);
+  const trialId = trial.trial_id;
+  const trialSpec = resolve_trial_spec(controller, condition);
 
   const baKey = String(settings.ba_key ?? "f").trim().toLowerCase();
   const daKey = String(settings.da_key ?? "j").trim().toLowerCase();
   const gaKey = String(settings.ga_key ?? "k").trim().toLowerCase();
   const responseKeys = [baKey, daKey, gaKey];
+  const triggerMap = (settings.triggers ?? {}) as Record<string, unknown>;
+  const trigger = (name: string): number | null => {
+    const value = triggerMap[name];
+    return value == null ? null : Number(value);
+  };
 
-  const fixationDuration = asDuration(controller, settings.fixation_duration, 0.6);
+  const fixationDuration = resolve_deadline(settings.fixation_duration) ?? 0.6;
   const avDuration = Number(settings.av_duration ?? 1.1);
   const decisionDeadline = Number(settings.decision_deadline ?? 1.8);
   const feedbackDuration = Number(settings.feedback_duration ?? 0.7);
-  const itiDuration = asDuration(controller, settings.iti_duration, 0.7);
+  const itiDuration = resolve_deadline(settings.iti_duration) ?? 0.7;
 
   const fixation = trial.unit("fixation").addStim(stimBank.get("fixation"));
   set_trial_context(fixation, {
@@ -83,7 +85,7 @@ export function run_trial(
     },
     stim_id: "fixation"
   });
-  fixation.show({ duration: fixationDuration }).to_dict();
+  fixation.show({ duration: fixationDuration, onset_trigger: trigger("fixation_onset") }).to_dict();
 
   const avStimulus = trial
     .unit("av_stimulus")
@@ -111,7 +113,7 @@ export function run_trial(
     },
     stim_id: `audio_${trialSpec.audio_syllable}+mouth_${trialSpec.visual_syllable}`
   });
-  avStimulus.show({ duration: avDuration }).to_dict();
+  avStimulus.show({ duration: avDuration, onset_trigger: trigger(`${trialSpec.condition}_av_onset`) }).to_dict();
 
   const decision = trial
     .unit("decision")
@@ -147,7 +149,14 @@ export function run_trial(
     .captureResponse({
       keys: responseKeys,
       correct_keys: responseKeys,
-      duration: decisionDeadline
+      duration: decisionDeadline,
+      onset_trigger: trigger(`${trialSpec.condition}_decision_onset`),
+      response_trigger: {
+        [baKey]: Number(triggerMap.response_ba ?? 50),
+        [daKey]: Number(triggerMap.response_da ?? 51),
+        [gaKey]: Number(triggerMap.response_ga ?? 52)
+      },
+      timeout_trigger: trigger(`${trialSpec.condition}_no_response`)
     })
     .set_state({
       trial_id: trialId,
@@ -205,11 +214,20 @@ export function run_trial(
     task_factors: {
       stage: "feedback",
       condition: trialSpec.condition,
+      reported_syllable: (snapshot: TrialSnapshot) => snapshot.units.decision?.reported_syllable ?? null,
+      timed_out: (snapshot: TrialSnapshot) => snapshot.units.decision?.timed_out ?? true,
       block_idx
     },
-    stim_id: "feedback"
+    stim_id: (snapshot: TrialSnapshot) =>
+      Boolean(snapshot.units.decision?.timed_out ?? true) ? "feedback_timeout" : "feedback_recorded"
   });
-  feedback.show({ duration: feedbackDuration }).to_dict();
+  feedback.show({
+    duration: feedbackDuration,
+    onset_trigger: (snapshot: TrialSnapshot) =>
+      Boolean(snapshot.units.decision?.timed_out ?? true)
+        ? trigger("timeout_fb_onset")
+        : trigger("response_recorded_fb_onset")
+  }).to_dict();
 
   const iti = trial.unit("iti").addStim(stimBank.get("fixation"));
   set_trial_context(iti, {
@@ -225,7 +243,7 @@ export function run_trial(
     },
     stim_id: "fixation"
   });
-  iti.show({ duration: itiDuration }).to_dict();
+  iti.show({ duration: itiDuration, onset_trigger: trigger("iti_onset") }).to_dict();
 
   trial.finalize((snapshot, _runtime, helpers) => {
     const responseKey = String(snapshot.units.decision?.response_key ?? "").trim().toLowerCase();
@@ -245,6 +263,8 @@ export function run_trial(
     helpers.setTrialState("audio_syllable", trialSpec.audio_syllable);
     helpers.setTrialState("visual_syllable", trialSpec.visual_syllable);
     helpers.setTrialState("expected_percept", trialSpec.expected_percept);
+    helpers.setTrialState("visual_frame_count", 1);
+    helpers.setTrialState("visual_animation_frames", 1);
     helpers.setTrialState("decision_response", responseKey);
     helpers.setTrialState("decision_rt", typeof rt === "number" ? rt : null);
     helpers.setTrialState("decision_key_press", typeof keyPress === "boolean" ? keyPress : !timedOut);
