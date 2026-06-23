@@ -26,8 +26,8 @@ window:
 task:
   task_name: mcgurk_preview
   save_path: ./outputs/human
-  total_blocks: 2
-  total_trials: 60
+  total_blocks: 3
+  total_trials: 90
   trial_per_block: 30
   conditions: [congruent, incongruent, audio_only]
   key_list: ["f", "j", "k", "space"]
